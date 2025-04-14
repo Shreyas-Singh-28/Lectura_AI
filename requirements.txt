@@ -1,0 +1,7 @@
+keybert>=0.7.0
+transformers>=4.30.0
+requests>=2.31.0
+wikipedia>=1.4.0
+python-dotenv>=1.0.0
+sentence-transformers>=2.2.2
+torch>=2.0.0
