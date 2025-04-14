@@ -1,165 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Lectura_AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectura.AI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1 class="page-title">Lectura.AI</h1>
     <div class="container">
-        <div class="upload-section">
-            <div class="drop-zone" id="dropZone">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">
-                    <div class="main-text">Drag & Drop or Click to Upload</div>
-                    <div class="sub-text">.txt files only</div>
-                </div>
-                <input type="file" id="fileInput" accept=".txt">
-            </div>
-            <div class="loader" id="loader"></div>
-        </div>
+        <header>
+            <h1>Lectura<span class="ai">.AI</span></h1>
+            <p class="tagline">Transform files into study recommendations</p>
+        </header>
         
-        <div class="results-section" id="resultsSection"></div>
+        <main>
+            <form id="uploadForm" class="upload-box">
+                <div class="file-input">
+                    <input type="file" name="file" id="file" accept=".txt,.pdf,.docx,.mp3,.mp4,.wav" required>
+                    <label for="file">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Select File</span>
+                    </label>
+                    <div id="fileName"></div>
+                </div>
+                <button type="submit" class="process-btn">
+                    <span id="btnText">Process</span>
+                    <span id="btnSpinner" class="spinner"></span>
+                </button>
+                <div id="statusMessage"></div>
+                <p class="file-types">Supports: PDF, DOCX, TXT, MP3, MP4, WAV</p>
+            </form>
+        </main>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-            const loader = document.getElementById('loader');
-            const resultsSection = document.getElementById('resultsSection');
+        document.getElementById('file').addEventListener('change', (e) => {
+            document.getElementById('fileName').textContent = e.target.files[0]?.name || '';
+        });
 
-            dropZone.addEventListener('click', () => fileInput.click());
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
+            const fileInput = document.getElementById('file');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const statusMessage = document.getElementById('statusMessage');
             
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
+            if (!fileInput.files.length) {
+                showStatus('Please select a file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
             
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                if (e.dataTransfer.files.length) {
-                    processFile(e.dataTransfer.files[0]);
-                }
-            });
+            btnText.textContent = 'Processing...';
+            btnSpinner.style.display = 'inline-block';
+            statusMessage.textContent = '';
             
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    processFile(e.target.files[0]);
-                }
-            });
-
-            async function processFile(file) {
-                if (!file.name.endsWith('.txt')) {
-                    showError('Please upload a .txt file');
-                    return;
-                }
-
-                try {
-                    showLoader();
-                    clearResults();
-                    
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    const response = await fetch('/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || 'Upload failed');
-                    }
-
-                    const data = await response.json();
-                    displayResults(data);
-                } catch (error) {
-                    showError(error.message);
-                } finally {
-                    hideLoader();
-                }
-            }
-
-            function showLoader() {
-                loader.style.display = 'block';
-                resultsSection.style.opacity = '0.5';
-            }
-
-            function hideLoader() {
-                loader.style.display = 'none';
-                resultsSection.style.opacity = '1';
-            }
-
-            function clearResults() {
-                resultsSection.innerHTML = '';
-                resultsSection.style.opacity = '0';
-            }
-
-            function showError(message) {
-                resultsSection.innerHTML = `
-                    <div class="error">
-                        <div class="error-icon">⚠️</div>
-                        <div class="error-text">${message}</div>
-                    </div>
-                `;
-                resultsSection.style.opacity = '1';
-            }
-
-            function displayResults(data) {
-                resultsSection.innerHTML = `
-                    <div class="platform youtube">
-                        <h2>🎥 YouTube Recommendations</h2>
-                        <div class="items" id="youtubeItems"></div>
-                    </div>
-                    <div class="platform wikipedia">
-                        <h2>📚 Wikipedia Articles</h2>
-                        <div class="items" id="wikipediaItems"></div>
-                    </div>
-                    <div class="platform khan">
-                        <h2>🏫 Khan Academy</h2>
-                        <div class="items" id="khanItems"></div>
-                    </div>
-                `;
-
-                displayPlatformResults('youtube', data.youtube || []);
-                displayPlatformResults('wikipedia', data.wikipedia || []);
-                displayPlatformResults('khan', data.khan || []);
-            }
-
-            function displayPlatformResults(platform, items) {
-                const container = document.getElementById(`${platform}Items`);
-                if (!items.length) {
-                    container.innerHTML = `<div class="no-results">No ${platform} recommendations found</div>`;
-                    return;
-                }
-
-                items.forEach((item, index) => {
-                    const element = document.createElement('a');
-                    element.href = item.url;
-                    element.target = "_blank";
-                    element.className = 'recommendation-item';
-                    element.innerHTML = `
-                        <div class="title">${item.title}</div>
-                        <div class="url">${item.url}</div>
-                    `;
-                    element.style.opacity = '0';
-                    element.style.transform = 'translateY(20px)';
-                    container.appendChild(element);
-
-                    setTimeout(() => {
-                        element.style.transition = 'all 0.4s ease-out';
-                        element.style.opacity = '1';
-                        element.style.transform = 'translateY(0)';
-                    }, index * 100);
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
                 });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(result.message, 'success');
+                    if (result.redirect) {
+                        setTimeout(() => window.location.href = result.redirect, 1000);
+                    }
+                } else {
+                    showStatus(result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Network error', 'error');
+            } finally {
+                btnText.textContent = 'Process';
+                btnSpinner.style.display = 'none';
             }
         });
+
+        function showStatus(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = type;
+        }
     </script>
 </body>
 </html>
