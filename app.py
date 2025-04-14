@@ -1,14 +1,19 @@
 from flask import Flask, render_template, request, jsonify
-from study_recommender import process_text
 import os
 import logging
+from werkzeug.utils import secure_filename
+from study_recommender import process_text  # Import from separate file
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.logger.setLevel(logging.DEBUG)
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB limit
+app.logger.setLevel(logging.INFO)
+
+# Create uploads directory if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'txt'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'txt'
 
 @app.route('/')
 def index():
@@ -16,36 +21,33 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    app.logger.info("Upload request received")
-    
     if 'file' not in request.files:
-        app.logger.error("No file part in request")
         return jsonify({'error': 'No file uploaded'}), 400
     
     file = request.files['file']
     if file.filename == '':
-        app.logger.error("Empty filename received")
         return jsonify({'error': 'No selected file'}), 400
     
-    if not (file and allowed_file(file.filename)):
-        app.logger.error(f"Invalid file type: {file.filename}")
+    if not allowed_file(file.filename):
         return jsonify({'error': 'Only .txt files allowed'}), 400
 
     try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        text = file.read().decode('utf-8')
-        app.logger.info(f"Processing file: {file.filename} ({len(text)} characters)")
-        
+        filename = secure_filename(file.filename)
+        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(temp_path)
+
+        with open(temp_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+
         results = process_text(text)
-        app.logger.info(f"Recommendations generated: "
-                f"YouTube({len(results['youtube'])}), "
-                f"Wikipedia({len(results['wikipedia'])}), "
-                f"Khan Academy({len(results['khan'])})")
+
+        os.remove(temp_path)
         
         return jsonify(results)
+
     except Exception as e:
-        app.logger.error(f"Processing error: {str(e)}", exc_info=True)
+        app.logger.error(f"Error processing file: {str(e)}")
         return jsonify({'error': 'File processing failed'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)  # HTTP only

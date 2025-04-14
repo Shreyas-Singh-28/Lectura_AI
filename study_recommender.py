@@ -70,7 +70,7 @@ def search_wikipedia(keyword):
                     'title': page.title,
                     'url': page.url
                 })
-            except wikipedia.DisambiguationError as e:
+            except wikipedia.DisambiguationError:
                 results.append({
                     'title': result,
                     'url': f"https://en.wikipedia.org/wiki/{result.replace(' ', '_')}"
@@ -99,15 +99,12 @@ def process_text(text):
     }
     
     for keyword in keywords:
-        # YouTube
         for video in search_youtube(keyword):
             recommendations['youtube'][video['url']] = video
         
-        # Wikipedia
         for page in search_wikipedia(keyword):
             recommendations['wikipedia'][page['url']] = page
         
-        # Khan Academy
         for link in get_khan_academy_links(keyword):
             recommendations['khan'][link['url']] = link
     
