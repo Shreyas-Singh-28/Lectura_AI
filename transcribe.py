@@ -1,16 +1,47 @@
 import sys
 import os
+import subprocess
+import tempfile
+import shutil
 from dotenv import load_dotenv
 
 load_dotenv()
 
+def check_ffmpeg():
+    """Check if ffmpeg is available in the system path"""
+    if shutil.which("ffmpeg") is None:
+        raise Exception("ffmpeg is not installed or not found in PATH. Please install ffmpeg and try again.")
+
+def convert_to_wav(input_path, temp_dir):
+    """Convert media file to WAV format using FFmpeg"""
+    output_path = os.path.join(temp_dir, "converted_audio.wav")
+    
+    command = [
+        "ffmpeg",
+        "-i", input_path,
+        "-ar", "16000",  # Set audio sample rate to 16kHz
+        "-ac", "1",      # Set audio channels to mono
+        "-y",            # Overwrite output file without asking
+        output_path
+    ]
+    
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        error_message = f"FFmpeg conversion failed: {e.stderr.decode()}"
+        raise Exception(error_message)
+    
+    return output_path
+
 def transcribe_audio(file_path):
+    """Transcribe audio using Whisper"""
     import whisper
     model = whisper.load_model("base")
     result = model.transcribe(file_path)
     return result["text"]
 
 def extract_text_pdf(file_path):
+    """Extract text from PDF files"""
     try:
         import PyPDF2
         text = ""
@@ -23,6 +54,7 @@ def extract_text_pdf(file_path):
         raise Exception(f"PDF processing failed: {str(e)}")
 
 def extract_text_docx(file_path):
+    """Extract text from DOCX files"""
     try:
         import docx
         doc = docx.Document(file_path)
@@ -31,6 +63,7 @@ def extract_text_docx(file_path):
         raise Exception(f"DOCX processing failed: {str(e)}")
 
 def extract_text_txt(file_path):
+    """Extract text from TXT files"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
@@ -52,6 +85,14 @@ if __name__ == "__main__":
             print(extract_text_docx(file_path))
         elif ext == '.txt':
             print(extract_text_txt(file_path))
+        elif ext in ('.mp3', '.mp4'):
+            check_ffmpeg()
+            temp_dir = tempfile.mkdtemp()
+            try:
+                wav_path = convert_to_wav(file_path, temp_dir)
+                print(transcribe_audio(wav_path))
+            finally:
+                shutil.rmtree(temp_dir)
         else:
             print(transcribe_audio(file_path))
     except Exception as e:
