@@ -14,6 +14,15 @@ body {
     min-height: 100vh;
 }
 
+/* Page heading */
+.page-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 30px;
+}
+
 /* Container layout */
 .container {
     max-width: 1200px;
@@ -77,16 +86,17 @@ body {
 /* Loader animation */
 .loader {
     display: none;
-    width: 50px;
-    height: 50px;
-    border: 4px solid #f3f3f3;
+    width: 60px;
+    height: 60px;
+    border: 6px solid #f3f3f3;
     border-radius: 50%;
-    border-top: 4px solid #2196F3;
+    border-top: 6px solid #2196F3;
     animation: spin 1s linear infinite;
-    position: absolute;
+    position: fixed; /* Changed from absolute */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 9999; /* Ensures it's on top */
 }
 
 @keyframes spin {
@@ -141,7 +151,7 @@ body {
 .url {
     font-size: 0.85em;
     color: #6c757d;
-    word-break: break-all;
+    word-break: break-word;
 }
 
 /* Error and empty states */
