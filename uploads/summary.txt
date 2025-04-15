@@ -1,0 +1,1 @@
+Machine Learning (ML) is a subset of artificial intelligence (AI) that enables computers to learn from data. ML algorithms identify patterns in data and make predictions or decisions based on that analysis. From healthcare to finance, its applications are vast and growing.

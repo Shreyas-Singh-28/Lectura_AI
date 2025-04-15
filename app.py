@@ -4,6 +4,7 @@ import subprocess
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import study_recommender  # Import your recommendation system
+from summarizer import summarize_transcription
 
 load_dotenv()
 
@@ -86,12 +87,16 @@ def recommendations():
     with open(transcription_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
+    # Generate summary
+    summary = summarize_transcription(app.config['UPLOAD_FOLDER'])
+    
     # Call your recommendation system
     recommendations = study_recommender.generate_recommendations(content)
     
-    # Convert newlines to HTML line breaks and escape special characters
+    # Format content for display
     formatted_content = content[:500].replace('\n', '<br>') + ('...' if len(content) > 500 else '')
     formatted_recommendations = recommendations.replace('\n', '<br>')
+    formatted_summary = (summary.replace('\n', '<br>') if summary else "No summary available")
     
     return f"""
     <!DOCTYPE html>
@@ -101,12 +106,16 @@ def recommendations():
         <link rel="stylesheet" href="/style.css">
     </head>
     <body>
-        <div class="container">
+        <div class="container results">
             <h1>Study Recommendations</h1>
             <div class="results-container">
                 <div class="transcription-preview">
                     <h3>Processed Content Preview:</h3>
                     <div class="content-box">{formatted_content}</div>
+                </div>
+                <div class="summary">
+                    <h3>Content Summary:</h3>
+                    <div class="content-box">{formatted_summary}</div>
                 </div>
                 <div class="recommendations">
                     <h3>Recommended Study Materials:</h3>

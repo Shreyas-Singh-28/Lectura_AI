@@ -211,16 +211,23 @@ h3 {
     max-height: 500px;
     overflow-y: auto;
     white-space: pre-wrap;
-    line-height: 1.6;
+    line-height: 1.8;
 }
 
 .recommendations-box a {
     color: var(--accent-color);
     text-decoration: none;
+    word-break: break-all;
 }
 
 .recommendations-box a:hover {
     text-decoration: underline;
+}
+
+.rec-type {
+    font-weight: 600;
+    color: #aaa;
+    margin-right: 5px;
 }
 
 .source-tag {
@@ -230,4 +237,18 @@ h3 {
     border-radius: 4px;
     font-size: 0.8rem;
     margin-right: 0.5rem;
+}
+
+.summary {
+    background-color: var(--card-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #333;
+    margin-bottom: 1rem;
+}
+
+.results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
