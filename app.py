@@ -76,6 +76,18 @@ def upload_file():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/download-summary')
+def download_summary():
+    summary_path = os.path.join(app.config['UPLOAD_FOLDER'], 'summary.txt')
+    if not os.path.exists(summary_path):
+        return "Summary not found", 404
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'],
+        'summary.txt',
+        as_attachment=True,
+        download_name='lectura_summary.txt'
+    )
 
 @app.route('/recommendations')
 def recommendations():
@@ -123,6 +135,7 @@ def recommendations():
                 </div>
             </div>
             <a href="/" class="back-btn">Process Another File</a>
+            <a href="/download-summary" class="download-btn">Download Summary</a>
         </div>
     </body>
     </html>

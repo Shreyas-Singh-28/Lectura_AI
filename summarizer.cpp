@@ -9,7 +9,7 @@
 #include <cctype>
 #include <set>
 #include <cmath>
-#include "C:/Users/myalt/Libraries/eigen-3.4.0/Eigen/Dense"
+#include "Eigen/Dense"
 
 using namespace std;
 using namespace Eigen;
