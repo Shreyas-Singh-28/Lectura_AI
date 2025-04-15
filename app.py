@@ -99,16 +99,39 @@ def recommendations():
     with open(transcription_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Generate summary
     summary = summarize_transcription(app.config['UPLOAD_FOLDER'])
-    
-    # Call your recommendation system
     recommendations = study_recommender.generate_recommendations(content)
     
-    # Format content for display
+    # Format content displays
     formatted_content = content[:500].replace('\n', '<br>') + ('...' if len(content) > 500 else '')
-    formatted_recommendations = recommendations.replace('\n', '<br>')
     formatted_summary = (summary.replace('\n', '<br>') if summary else "No summary available")
+    
+    # Create categorized recommendations HTML
+    def format_category(category, items, emoji):
+        if not items:
+            return ""
+        items_html = "<br>".join(
+            [f'{emoji} <a href="{item["url"]}" target="_blank" class="{category}-link">{item["title"]}</a>'
+             for item in items[:3]]  # Show max 3 per category
+        )
+        return f"""
+        <div class="recommend-category {category}-category">
+            <h3>{category.replace('_', ' ').title()}:</h3>
+            <div class="category-items">{items_html}</div>
+        </div>
+        """
+    
+    youtube_html = format_category('youtube', recommendations['youtube'], '🎥')
+    wikipedia_html = format_category('wikipedia', recommendations['wikipedia'], '📚')
+    khan_html = format_category('khan_academy', recommendations['khan_academy'], '🏫')
+    
+    recommendations_html = f"""
+    <div class="recommendations-container">
+        {youtube_html}
+        {wikipedia_html}
+        {khan_html}
+    </div>
+    """
     
     return f"""
     <!DOCTYPE html>
@@ -131,7 +154,7 @@ def recommendations():
                 </div>
                 <div class="recommendations">
                     <h3>Recommended Study Materials:</h3>
-                    <div class="recommendations-box">{formatted_recommendations}</div>
+                    {recommendations_html}
                 </div>
             </div>
             <a href="/" class="back-btn">Process Another File</a>

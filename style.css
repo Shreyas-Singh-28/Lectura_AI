@@ -270,3 +270,48 @@ h3 {
 .download-btn:hover {
     background-color: #059669;
 }
+
+.recommendations-container {
+    margin-top: 1.5rem;
+}
+
+.recommend-category {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #1e1e1e;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.recommend-category h3 {
+    color: var(--accent-color);
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+}
+
+.category-items {
+    line-height: 1.8;
+    margin-left: 1rem;
+}
+
+.category-items a {
+    color: #e0e0e0;
+    text-decoration: none;
+    display: block;
+    padding: 0.3rem 0;
+    transition: color 0.2s;
+}
+
+.category-items a:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+/* Category-specific colors */
+.youtube-category { border-color: #ff0000; }
+.wikipedia-category { border-color: #0066ff; }
+.khan_academy-category { border-color: #00bf6f; }
+
+.youtube-link { color: #ff6666; }
+.wikipedia-link { color: #6699ff; }
+.khan_academy-link { color: #00cc88; }

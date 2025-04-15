@@ -1,2 +1,2 @@
-Summary (39 words):
-In chess you can win and lose, but you can also draw. The most common type is like this. You offer a draw, the opponent accepts. But did you know there's 5 other ways you can tie in chess?
+Summary (61 words):
+Machine Learning (ML) is a subset of artificial intelligence (AI) that enables computers to learn from data. ML algorithms identify patterns in data and make predictions or decisions based on that analysis. From healthcare to finance, its applications are vast and growing. With advancements in deep learning, natural language processing (NLP), and AI ethics, machine learning will continue to revolutionize industries.
