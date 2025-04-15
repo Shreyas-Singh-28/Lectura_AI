@@ -1,75 +1,128 @@
 # summarizer.py
 from transformers import pipeline
 import os
+import math
 from typing import Optional
 
 class ContentSummarizer:
     def __init__(self):
-        # Initialize the summarization pipeline
+        # Initialize with model that has defined max length
         self.summarizer = pipeline(
             "summarization",
             model="facebook/bart-large-cnn",
             framework="pt"
         )
-    
-    def summarize_text(self, text: str, max_length: int = 150, min_length: int = 30) -> Optional[str]:
-        """Summarize the given text using BART model"""
+        self.model_max_length = 1024  # Specific to bart-large-cnn
+
+    def summarize_text(self, text: str) -> Optional[str]:
+        """Generate dynamic summary (~40% of original length) with safe handling"""
         try:
             if not text.strip():
                 return None
-                
-            # Split text into chunks of 1024 tokens (model limit)
-            chunks = self._chunk_text(text)
+
+            # Calculate target lengths safely
+            word_count = len(text.split())
+            if word_count < 80:
+                return None  # Skip summarization for very short texts
+
+            # Calculate dynamic lengths
+            target_summary_length = max(60, math.floor(word_count * 0.4))
+            chunk_size = self._calculate_chunk_size(word_count)
+
+            # Split text into model-safe chunks
+            chunks = self._chunk_text(text, chunk_size)
+            if not chunks:
+                return None
+
             summaries = []
-            
             for chunk in chunks:
-                summary = self.summarizer(
-                    chunk,
-                    max_length=max_length,
-                    min_length=min_length,
-                    do_sample=False
+                chunk_word_count = len(chunk.split())
+                if chunk_word_count < 40:  # Skip tiny chunks
+                    continue
+
+                # Calculate chunk-specific limits
+                chunk_target = max(
+                    40,
+                    min(
+                        math.floor(chunk_word_count * 0.4),
+                        self.model_max_length - 60  # Leave room for generation
+                    )
                 )
-                summaries.append(summary[0]['summary_text'])
-            
-            return " ".join(summaries)
+
+                try:
+                    summary = self.summarizer(
+                        chunk,
+                        max_length=chunk_target,
+                        min_length=max(30, math.floor(chunk_target * 0.5)),
+                        do_sample=False,
+                        truncation=True
+                    )
+                    if summary and len(summary) > 0:
+                        summaries.append(summary[0]['summary_text'])
+                except Exception as chunk_error:
+                    print(f"Chunk processing error: {chunk_error}")
+                    continue
+
+            if not summaries:
+                return None
+
+            full_summary = " ".join(summaries)
+            return self._finalize_summary(full_summary, target_summary_length)
+
         except Exception as e:
             print(f"Summarization error: {e}")
             return None
-    
-    def _chunk_text(self, text: str, chunk_size: int = 1000) -> list:
-        """Split text into manageable chunks for the model"""
+
+    def _calculate_chunk_size(self, word_count: int) -> int:
+        """Determine safe chunk size based on input length"""
+        if word_count <= 1000:
+            return 800  # Single chunk
+        return 600  # Smaller chunks for longer texts
+
+    def _chunk_text(self, text: str, chunk_size: int) -> list:
+        """Split text into safe chunks with overlap prevention"""
         words = text.split()
+        if len(words) <= chunk_size:
+            return [" ".join(words)]
+
         chunks = []
-        
         for i in range(0, len(words), chunk_size):
             chunk = " ".join(words[i:i+chunk_size])
-            chunks.append(chunk)
-        
+            # Prevent empty chunks
+            if chunk.strip():
+                chunks.append(chunk)
         return chunks
 
+    def _finalize_summary(self, summary: str, target: int) -> str:
+        """Ensure final summary quality and length"""
+        summary_words = summary.split()
+        if len(summary_words) > target * 1.2:  # If too long
+            return " ".join(summary_words[:target])
+        return summary
+
 def summarize_transcription(upload_folder: str = "uploads") -> Optional[str]:
-    """Main function to summarize the transcription.txt file"""
-    transcription_path = os.path.join(upload_folder, "transcription.txt")
-    summary_path = os.path.join(upload_folder, "summary.txt")
-    
-    if not os.path.exists(transcription_path):
-        return None
-    
+    """Main function with enhanced error handling"""
     try:
+        transcription_path = os.path.join(upload_folder, "transcription.txt")
+        if not os.path.exists(transcription_path):
+            return None
+
         with open(transcription_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        
+            content = f.read().strip()
+
+        if not content or len(content.split()) < 80:
+            return "Content too short for meaningful summary"
+
         summarizer = ContentSummarizer()
         summary = summarizer.summarize_text(content)
-        
+
         if summary:
-            # Save the summary for future use
+            summary_path = os.path.join(upload_folder, "summary.txt")
             with open(summary_path, "w", encoding="utf-8") as f:
-                f.write(summary)
-            
+                f.write(f"Summary ({len(summary.split())} words):\n{summary}")
             return summary
-        
-        return None
+
+        return "Summary generation failed - try with longer content"
     except Exception as e:
-        print(f"Error summarizing transcription: {e}")
+        print(f"Summarization failed: {e}")
         return None
