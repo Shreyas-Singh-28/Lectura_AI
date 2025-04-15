@@ -39,7 +39,7 @@ def search_youtube(keyword: str) -> List[Dict[str, str]]:
                 'part': 'snippet',
                 'q': f"{keyword} tutorial",
                 'key': YOUTUBE_API_KEY,
-                'maxResults': 3,
+                'maxResults': 7,
                 'type': 'video'
             },
             timeout=10
@@ -59,7 +59,7 @@ def search_wikipedia(keyword: str) -> List[Dict[str, str]]:
             'title': result,
             'url': f"https://en.wikipedia.org/wiki/{result.replace(' ', '_')}",
             'type': 'wikipedia'
-        } for result in wikipedia.search(keyword)[:3]]
+        } for result in wikipedia.search(keyword)[:7]]
     except Exception as e:
         logger.error(f"Wikipedia search failed: {e}")
         return []
@@ -69,7 +69,7 @@ def get_khan_academy_links(keyword: str) -> List[Dict[str, str]]:
         'title': f"{keyword} (Khan Academy)",
         'url': f"https://www.khanacademy.org/search?referer=%2F&page_search_query={keyword.replace(' ', '+')}",
         'type': 'khan_academy'
-    }]
+    } for _ in range(5)]
 
 def generate_recommendations(text: str) -> Dict[str, List[Dict[str, str]]]:
     keywords = extract_keywords(text)

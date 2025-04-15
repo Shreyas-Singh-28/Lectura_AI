@@ -112,7 +112,7 @@ def recommendations():
             return ""
         items_html = "<br>".join(
             [f'{emoji} <a href="{item["url"]}" target="_blank" class="{category}-link">{item["title"]}</a>'
-             for item in items[:3]]  # Show max 3 per category
+             for item in items[:7]]  # Show max 7 per category
         )
         return f"""
         <div class="recommend-category {category}-category">
