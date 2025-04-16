@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import study_recommender  # Import your recommendation system
 from summarizer import summarize_transcription
+import cleanup
 
 load_dotenv()
 

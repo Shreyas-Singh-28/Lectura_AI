@@ -7,6 +7,7 @@ import re
 from dotenv import load_dotenv
 import logging
 from typing import Dict, List
+import cleanup
 
 load_dotenv()
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
