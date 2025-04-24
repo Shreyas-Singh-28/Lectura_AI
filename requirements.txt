@@ -1,6 +1,9 @@
 whisper-ai>=1.0
 torch>=2.0
 numpy>=1.20
+keybert==0.7.0
+sentence-transformers==2.2.2
+transformers==4.30.2
 PyPDF2>=3.0
 python-docx>=0.8
 ffmpeg-python>=0.2
